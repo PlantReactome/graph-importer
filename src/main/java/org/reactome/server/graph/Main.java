@@ -21,6 +21,7 @@ public class Main {
                         new FlaggedOption("user",     JSAP.STRING_PARSER,   "reactome",          JSAP.NOT_REQUIRED, 'u', "user",     "The database user"),
                         new FlaggedOption("password", JSAP.STRING_PARSER,   "reactome",          JSAP.NOT_REQUIRED, 'p', "password", "The password to connect to the database"),
                         new FlaggedOption("neo4j",    JSAP.STRING_PARSER,   "./target/graph.db", JSAP.NOT_REQUIRED, 'n', "neo4j",    "Path to the neo4j database"),
+                        new FlaggedOption("speciesid",JSAP.LONG_PARSER,     "48887",             JSAP.NOT_REQUIRED, 'S', "speciesid","Internal reference species identifier"),
                         new QualifiedSwitch("bar",    JSAP.BOOLEAN_PARSER,  JSAP.NO_DEFAULT,     JSAP.NOT_REQUIRED, 'b', "bar",      "Forces final status")
                 }
         );
@@ -39,7 +40,8 @@ public class Main {
                 config.getString("name"),
                 config.getString("user"),
                 config.getString("password"),
-                config.getString("neo4j"));
+                config.getString("neo4j"),
+                config.getLong("speciesid"));
         batchImporter.importAll(!config.getBoolean("bar"));
     }
 }

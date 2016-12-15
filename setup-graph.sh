@@ -17,7 +17,7 @@ The password will only be updated after installing or updating the neo4j server
 The neo4j server can be updated without uninstalling it before.
 WARNING: If no password is specified the old password will persist.
 
-$(basename "$0") [-r <reactome_host> -s <reactome_port> —t <reactome_db_name> -u <reactome_db_user> -v <reactome_db_password> -d <neo4j_db_directory> -e <neo4j_db_name> -j <import_data> -i <install_neo4j> -m <neo4j_user> -n <neo4j_password> ]
+$(basename "$0") [-r <reactome_host> -s <reactome_port> -t <reactome_db_name> -u <reactome_db_user> -v <reactome_db_password> -d <neo4j_db_directory> -e <neo4j_db_name> -j <import_data> -i <install_neo4j> -m <neo4j_user> -n <neo4j_password> -S <speciesid>]
 
 where:
     -h  Program help/usage
@@ -30,7 +30,9 @@ where:
     -e  Neo4j name of graph Db. DEFAULT: graph.db
     -j  Import Reactome data. DEFAULT: false
     -i  Install neo4j. DEFAULT: false
-    -n  Neo4j password (only set when neo4j is installed)."	
+    -S  Set reference species. DEFAULT: 48887 (Homo sapiens)
+    -m  Neo4j user. DEFAULT: neo4j
+    -n  Neo4j password (only set when neo4j is installed)."
 
 _REACTOME_HOST="localhost"
 _REACTOME_PORT=3306
@@ -41,11 +43,13 @@ _GRAPH_DIR="/var/lib/neo4j/data/databases/"
 _GRAPH_NAME="graph.db"
 _IMPORT_DATA=false
 _INSTALL_NEO4J=false
+_SPECIES_ID=48887
+_NEO4J_USER="neo4j"
 
 _PROBLEMS=0
 
 # :h (help) should be at the very end of the while loop
-while getopts ":r:s:t:u:v:d:e:m:n:ijh" option; do
+while getopts ":r:s:t:u:v:d:e:m:n:S:ijh" option; do
   case "$option" in
     h) echo "$usage"
        exit
@@ -68,7 +72,11 @@ while getopts ":r:s:t:u:v:d:e:m:n:ijh" option; do
        ;;
     j) _IMPORT_DATA=true
        ;;
+    m) _NEO4J_USER=$OPTARG
+       ;;
     n) _NEO4J_PASSWORD=$OPTARG
+       ;;
+    S) _SPECIES_ID=$OPTARG
        ;;
    \?) echo "Invalid option: -$OPTARG" >&2
        echo "$usage" >&2
@@ -85,6 +93,7 @@ if ${_INSTALL_NEO4J} = true; then
     sudo mv /tmp/neo4j.list /etc/apt/sources.list.d
     sudo apt-get update
     sudo apt-get install neo4j
+
     echo "installing neo4j finished"
     if [ ! -z "$_NEO4J_PASSWORD" ]; then 
 	echo "removing old authentication"
@@ -149,14 +158,14 @@ if ${_IMPORT_DATA} = true; then
     fi
 
     echo "Started importing dataimport to the neo4j database"
-    if ! java -jar .${_PATH}/target/DatabaseImporter-jar-with-dependencies.jar -h ${_REACTOME_HOST} -s ${_REACTOME_PORT} -d ${_REACTOME_DATABASE} -u ${_REACTOME_USER} -p ${_REACTOME_PASSWORD} -n ${_GRAPH_DIR}${_GRAPH_NAME}; then
+    if ! java -jar .${_PATH}/target/BatchImporter-jar-with-dependencies.jar -h ${_REACTOME_HOST} -s ${_REACTOME_PORT} -d ${_REACTOME_DATABASE} -u ${_REACTOME_USER} -p ${_REACTOME_PASSWORD} -n ${_GRAPH_DIR}${_GRAPH_NAME} -S ${_SPECIES_ID}; then
         echo "An error occurred during the dataimport import process"
         exit 1
     fi
     echo "DataImport finished successfully!"
 
     echo "Changing permissions of neo4j graph"
-    if ! sudo chown -R neo4j ${_GRAPH_DIR}${_GRAPH_NAME}; then
+    if ! sudo chown -R ${_NEO4J_USER} ${_GRAPH_DIR}${_GRAPH_NAME}; then
         echo "An error occurred when trying to change permissions of the neo4j graph"
         exit 1
     fi

@@ -35,8 +35,7 @@ public class ReactomeBatchImporter {
     private static MySQLAdaptor dba;
     private static BatchInserter batchInserter;
     private static String DATA_DIR;
-
-    private static final Long MAIN_SPECIES_ID = 48887L;
+    private static Long MAIN_SPECIES_ID;
 
     private static final String DBID = "dbId";
     private static final String STID = "stId";
@@ -62,9 +61,10 @@ public class ReactomeBatchImporter {
 
     private static final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    public ReactomeBatchImporter(String host, Integer port, String name, String user, String password, String neo4j) {
+    public ReactomeBatchImporter(String host, Integer port, String name, String user, String password, String neo4j, Long speciesid) {
         try {
             DATA_DIR = neo4j;
+            MAIN_SPECIES_ID = speciesid;
             dba = new MySQLAdaptor(host, name, user, password, port);
             total = (int) dba.getClassInstanceCount(ReactomeJavaConstants.DatabaseObject);
             total = total - (int) dba.getClassInstanceCount(ReactomeJavaConstants.StableIdentifier);
